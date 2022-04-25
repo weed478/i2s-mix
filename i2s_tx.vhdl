@@ -3,8 +3,8 @@ use ieee.std_logic_1164.all;
 
 entity i2s_tx is
     port (
-        i_left : in std_logic_vector(15 downto 0);
-        i_right : in std_logic_vector(15 downto 0);
+        i_word : in std_logic_vector(31 downto 0);
+        o_load : out std_logic;
 
         i_sck : in std_logic;
         i_ws : in std_logic;
@@ -14,16 +14,18 @@ end entity i2s_tx;
 
 architecture rtl of i2s_tx is
     
-    signal r_shift_reg : std_logic_vector(15 downto 0);
+    signal r_reg : std_logic_vector(31 downto 0);
     signal r_ws_d1 : std_logic;
     signal r_ws_d2 : std_logic;
-    signal r_ws_edge : std_logic;
+    signal r_load : std_logic;
 
 begin
     
-    r_ws_edge <= r_ws_d1 xor r_ws_d2;
+    r_load <= r_ws_d2 and not r_ws_d1;
+    
+    o_load <= r_load;
 
-    o_sd <= r_shift_reg(r_shift_reg'high);
+    o_sd <= r_reg(r_reg'high);
 
     p_delay_ws : process (i_sck) is
     begin
@@ -36,21 +38,12 @@ begin
     p_reg : process (i_sck) is
     begin
         if falling_edge(i_sck) then
-            if r_ws_edge = '1' then
+            if r_load = '1' then
                 -- load
-                if r_ws_d1 = '1' then
-                    r_shift_reg <= i_right;
-                else
-                    r_shift_reg <= i_left;
-                end if;
+                r_reg <= i_word;
             else
                 -- shift out MSB
-                r_shift_reg <=
-                    r_shift_reg(
-                        r_shift_reg'high - 1 
-                        downto
-                        r_shift_reg'low
-                    ) & '0';
+                r_reg <= r_reg(r_reg'high - 1 downto r_reg'low) & '0';
             end if;
         end if;
     end process p_reg;
