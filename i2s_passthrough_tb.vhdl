@@ -8,6 +8,9 @@ end entity i2s_passthrough_tb;
 architecture tb of i2s_passthrough_tb is
 
     component i2s_master
+        generic (
+            c_clk_divider : natural
+        );
         port (
             i_clk : in std_logic;
             o_sck : out std_logic;
@@ -76,6 +79,9 @@ begin
     r_word_tx <= r_left_tx & r_right_tx;
 
     i2s_master_1 : i2s_master
+        generic map (
+            c_clk_divider => 2
+        )
         port map (
             i_clk => r_clk,
             o_sck => r_pth_rx_sck,

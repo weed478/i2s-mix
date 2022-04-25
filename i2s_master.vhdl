@@ -2,6 +2,9 @@ library ieee;
 use ieee.std_logic_1164.all;
 
 entity i2s_master is
+    generic (
+        c_clk_divider : natural
+    );
     port (
         i_clk : in std_logic;
         o_sck : out std_logic;
@@ -11,11 +14,10 @@ end entity i2s_master;
 
 architecture behav of i2s_master is
     
-    constant c_sck_divider : natural := 100;
-    constant c_ws_divider : natural := 32;
+    constant c_sck_divider : natural := 32;
 
-    constant c_sck_max : natural := c_sck_divider / 2 - 1;
-    constant c_ws_max : natural := c_ws_divider / 2 - 1;
+    constant c_sck_max : natural := c_clk_divider / 2 - 1;
+    constant c_ws_max : natural := c_sck_divider / 2 - 1;
 
     signal r_sck_count : natural range 0 to c_sck_max := 0;
     signal r_ws_count : natural range 0 to c_ws_max := 0;
