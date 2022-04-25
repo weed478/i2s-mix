@@ -42,16 +42,23 @@ architecture rtl of i2s_mix is
         );
     end component i2s_rx;
 
+    -- master clock
     signal r_sck : std_logic;
     signal r_ws : std_logic;
 
+    -- input 1
     signal r_rx_1_word : std_logic_vector(31 downto 0);
+    signal r_rx_1_word_buf : std_logic_vector(31 downto 0);
     signal r_rx_1_ready : std_logic;
 
+    -- input 2
     signal r_rx_2_word : std_logic_vector(31 downto 0);
+    signal r_rx_2_word_buf : std_logic_vector(31 downto 0);
     signal r_rx_2_ready : std_logic;
 
-    signal r_tx_word : std_logic_vector(31 downto 0) := (others => '0');
+    -- output
+    signal r_tx_word : std_logic_vector(31 downto 0);
+    signal r_tx_word_buf : std_logic_vector(31 downto 0);
     signal r_tx_load : std_logic;
 
 begin
@@ -60,7 +67,7 @@ begin
         port map (
             o_word => r_rx_1_word,
             o_ready => r_rx_1_ready,
-            
+            -- clocked from input 1
             i_sck => i_sck1,
             i_ws => i_ws1,
             i_sd => i_sd1
@@ -70,7 +77,7 @@ begin
         port map (
             o_word => r_rx_2_word,
             o_ready => r_rx_2_ready,
-            
+            -- clocked from input 2        
             i_sck => i_sck2,
             i_ws => i_ws2,
             i_sd => i_sd2
@@ -78,8 +85,10 @@ begin
 
     i2s_tx_1 : i2s_tx
         port map (
-            i_word => r_tx_word,
+            -- loaded from master synchronized buffer
+            i_word => r_tx_word_buf,
             o_load => r_tx_load,
+            -- clocked from master
             i_sck => r_sck,
             i_ws => r_ws,
             o_sd => o_sd
@@ -93,24 +102,39 @@ begin
     o_sck <= r_sck;
     o_ws <= r_ws;
 
-    process (r_sck) is
+    -- store latest word from input 1
+    p_rx_1 : process (i_sck1) is
     begin
-        if rising_edge(r_sck) then
-            if r_rx_1_ready = '1' and r_rx_2_ready = '1' then
-                -- sum both words
-                r_tx_word <= std_logic_vector(
-                    signed(r_rx_1_word) + signed(r_rx_2_word)
-                );
-            elsif r_rx_1_ready = '1' then
-                -- input 1 is set first
-                r_tx_word <= r_rx_1_word;
-            elsif r_rx_2_ready = '1' then
-                -- input 2 is added to input 1
-                r_tx_word <= std_logic_vector(
-                    signed(r_tx_word) + signed(r_rx_2_word)
-                );
+        if rising_edge(i_sck1) then
+            if r_rx_1_ready = '1' then
+                r_rx_1_word_buf <= r_rx_1_word;
             end if;
         end if;
-    end process;
+    end process p_rx_1;
+
+    -- store latest word from input 2
+    p_rx_2 : process (i_sck2) is
+    begin
+        if rising_edge(i_sck2) then
+            if r_rx_2_ready = '1' then
+                r_rx_2_word_buf <= r_rx_2_word;
+            end if;
+        end if;
+    end process p_rx_2;
+
+    -- tx word is sum of latest inputs
+    r_tx_word <= std_logic_vector(
+        signed(r_rx_1_word_buf) + signed(r_rx_2_word_buf)
+    );
+
+    -- sync tx word into master clock domain
+    p_tx : process (r_sck) is
+    begin
+        if rising_edge(r_sck) then
+            if r_tx_load = '1' then
+                r_tx_word_buf <= r_tx_word;
+            end if;
+        end if;
+    end process p_tx;
     
 end architecture rtl;
