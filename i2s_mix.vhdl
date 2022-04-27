@@ -43,19 +43,23 @@ architecture rtl of i2s_mix is
     end component i2s_rx;
 
     -- input 1
+    signal r_rx_1_ready : std_logic;
     signal r_rx_1_word : std_logic_vector(31 downto 0);
     signal r_rx_1_word_buf : std_logic_vector(31 downto 0);
-    signal r_rx_1_ready : std_logic;
+    -- tx clock synchronized buffer
+    signal r_rx_1_word_buf_tx : std_logic_vector(31 downto 0);
 
     -- input 2
+    signal r_rx_2_ready : std_logic;
     signal r_rx_2_word : std_logic_vector(31 downto 0);
     signal r_rx_2_word_buf : std_logic_vector(31 downto 0);
-    signal r_rx_2_ready : std_logic;
-
+    -- tx clock synchronized buffer
+    signal r_rx_2_word_buf_tx : std_logic_vector(31 downto 0);
+    
     -- output
+    signal r_tx_load : std_logic;
     signal r_tx_word : std_logic_vector(31 downto 0);
     signal r_tx_word_buf : std_logic_vector(31 downto 0);
-    signal r_tx_load : std_logic;
 
     -- mixer
     signal r_rx_1_left : signed(16 downto 0);
@@ -89,10 +93,10 @@ begin
 
     i2s_tx_1 : i2s_tx
         port map (
-            -- loaded from master synchronized buffer
+            -- loaded from tx synchronized buffer
             i_word => r_tx_word_buf,
             o_load => r_tx_load,
-            -- clocked from master
+            -- clocked from output
             i_sck => i_sck,
             i_ws => i_ws,
             o_sd => o_sd
@@ -118,12 +122,20 @@ begin
         end if;
     end process p_rx_2;
 
+    -- synchronize buffers with tx clock
+    p_tx_sync : process (i_sck) is
+    begin
+        if rising_edge(i_sck) then
+            r_rx_1_word_buf_tx <= r_rx_1_word_buf;
+            r_rx_2_word_buf_tx <= r_rx_2_word_buf;
+        end if;
+    end process p_tx_sync;
 
     -- channel extraction
-    r_rx_1_left <= resize(signed(r_rx_1_word_buf(31 downto 16)), 17);
-    r_rx_1_right <= resize(signed(r_rx_1_word_buf(15 downto 0)), 17);
-    r_rx_2_left <= resize(signed(r_rx_2_word_buf(31 downto 16)), 17);
-    r_rx_2_right <= resize(signed(r_rx_2_word_buf(15 downto 0)), 17);
+    r_rx_1_left <= resize(signed(r_rx_1_word_buf_tx(31 downto 16)), 17);
+    r_rx_1_right <= resize(signed(r_rx_1_word_buf_tx(15 downto 0)), 17);
+    r_rx_2_left <= resize(signed(r_rx_2_word_buf_tx(31 downto 16)), 17);
+    r_rx_2_right <= resize(signed(r_rx_2_word_buf_tx(15 downto 0)), 17);
 
     -- average
     r_tx_left <= shift_right(r_rx_1_left + r_rx_2_left, 1);
@@ -135,7 +147,7 @@ begin
         &
         std_logic_vector(resize(r_tx_right, 16));
 
-    -- sync tx word into tx clock domain
+    -- load new mixed word
     p_tx : process (i_sck) is
     begin
         if rising_edge(i_sck) then
