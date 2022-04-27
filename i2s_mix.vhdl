@@ -62,12 +62,12 @@ architecture rtl of i2s_mix is
     signal r_tx_word_buf : std_logic_vector(31 downto 0);
 
     -- mixer
-    signal r_rx_1_left : signed(16 downto 0);
-    signal r_rx_1_right : signed(16 downto 0);
-    signal r_rx_2_left : signed(16 downto 0);
-    signal r_rx_2_right : signed(16 downto 0);
-    signal r_tx_left : signed(16 downto 0);
-    signal r_tx_right : signed(16 downto 0);
+    signal r_rx_1_left : signed(15 downto 0);
+    signal r_rx_1_right : signed(15 downto 0);
+    signal r_rx_2_left : signed(15 downto 0);
+    signal r_rx_2_right : signed(15 downto 0);
+    signal r_tx_left : signed(15 downto 0);
+    signal r_tx_right : signed(15 downto 0);
 
 begin
 
@@ -132,20 +132,34 @@ begin
     end process p_tx_sync;
 
     -- channel extraction
-    r_rx_1_left <= resize(signed(r_rx_1_word_buf_tx(31 downto 16)), 17);
-    r_rx_1_right <= resize(signed(r_rx_1_word_buf_tx(15 downto 0)), 17);
-    r_rx_2_left <= resize(signed(r_rx_2_word_buf_tx(31 downto 16)), 17);
-    r_rx_2_right <= resize(signed(r_rx_2_word_buf_tx(15 downto 0)), 17);
+    r_rx_1_left <= signed(r_rx_1_word_buf_tx(31 downto 16));
+    r_rx_1_right <= signed(r_rx_1_word_buf_tx(15 downto 0));
+    r_rx_2_left <= signed(r_rx_2_word_buf_tx(31 downto 16));
+    r_rx_2_right <= signed(r_rx_2_word_buf_tx(15 downto 0));
 
     -- average
-    r_tx_left <= shift_right(r_rx_1_left + r_rx_2_left, 1);
-    r_tx_right <= shift_right(r_rx_1_right + r_rx_2_right, 1);
+    r_tx_left <= resize(
+        shift_right(
+            resize(r_rx_1_left, 17) +
+            resize(r_rx_2_left, 17),
+            1
+        ),
+        16
+    );
+    r_tx_right <= resize(
+        shift_right(
+            resize(r_rx_1_right, 17) +
+            resize(r_rx_2_right, 17),
+            1
+        ),
+        16
+    );
 
     -- combine
     r_tx_word <=
-        std_logic_vector(resize(r_tx_left, 16))
+        std_logic_vector(r_tx_left)
         &
-        std_logic_vector(resize(r_tx_right, 16));
+        std_logic_vector(r_tx_right);
 
     -- load new mixed word
     p_tx : process (i_sck) is
