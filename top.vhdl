@@ -101,7 +101,7 @@ begin
 
     -- input enable latches
     p_src_sel : process
-        (i_src_sel_0, i_src_sel_1, i_src_sel_01)
+        (i_src_sel_none, i_src_sel_0, i_src_sel_1, i_src_sel_01)
     is
     begin
         if i_src_sel_none = '0' then
