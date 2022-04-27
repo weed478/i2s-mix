@@ -80,9 +80,9 @@ begin
     -- master clock select latches
     p_master_sel : process (i_master_sel_0, i_master_sel_1) is
     begin
-        if i_master_sel_0 = '1' then
+        if i_master_sel_0 = '0' then
             r_master <= 0;
-        elsif i_master_sel_1 = '1' then
+        elsif i_master_sel_1 = '0' then
             r_master <= 1;
         end if;
     end process p_master_sel;
@@ -104,16 +104,16 @@ begin
         (i_src_sel_0, i_src_sel_1, i_src_sel_01)
     is
     begin
-        if i_src_sel_none = '1' then
+        if i_src_sel_none = '0' then
             r_src_en_0 <= '0';
             r_src_en_1 <= '0';
-        elsif i_src_sel_0 = '1' then
+        elsif i_src_sel_0 = '0' then
             r_src_en_0 <= '1';
             r_src_en_1 <= '0';
-        elsif i_src_sel_1 = '1' then
+        elsif i_src_sel_1 = '0' then
             r_src_en_0 <= '0';
             r_src_en_1 <= '1';
-        elsif i_src_sel_01 = '1' then
+        elsif i_src_sel_01 = '0' then
             r_src_en_0 <= '1';
             r_src_en_1 <= '1';
         end if;
