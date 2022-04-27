@@ -50,8 +50,8 @@ architecture tb of i2s_mix_tb is
             i_ws2 : in std_logic;
             i_sd2 : in std_logic;
     
-            o_sck : out std_logic;
-            o_ws : out std_logic;
+            i_sck : in std_logic;
+            i_ws : in std_logic;
             o_sd : out std_logic
         );
     end component i2s_mix;
@@ -180,14 +180,17 @@ begin
             i_ws2 => r_tx_2_ws,
             i_sd2 => r_tx_2_sd,
 
-            o_sck => r_rx_sck,
-            o_ws => r_rx_ws,
+            i_sck => r_rx_sck,
+            i_ws => r_rx_ws,
             o_sd => r_rx_sd
         );
 
 
 
     -- output
+
+    r_rx_sck <= r_tx_1_sck;
+    r_rx_ws <= r_tx_1_ws;
 
     i2s_rx_1 : i2s_rx
         port map (

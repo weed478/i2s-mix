@@ -12,7 +12,7 @@ entity i2s_master is
     );
 end entity i2s_master;
 
-architecture behav of i2s_master is
+architecture rtl of i2s_master is
     
     constant c_sck_divider : natural := 32;
 
@@ -51,4 +51,4 @@ begin
         end if;
     end process p_divider;
 
-end architecture behav;
+end architecture rtl;
