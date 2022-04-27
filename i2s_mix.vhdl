@@ -12,8 +12,8 @@ entity i2s_mix is
         i_ws2 : in std_logic;
         i_sd2 : in std_logic;
 
-        o_sck : out std_logic;
-        o_ws : out std_logic;
+        i_sck : in std_logic;
+        i_ws : in std_logic;
         o_sd : out std_logic
     );
 end entity i2s_mix;
@@ -41,10 +41,6 @@ architecture rtl of i2s_mix is
             i_sd : in std_logic
         );
     end component i2s_rx;
-
-    -- master clock
-    signal r_sck : std_logic;
-    signal r_ws : std_logic;
 
     -- input 1
     signal r_rx_1_word : std_logic_vector(31 downto 0);
@@ -97,18 +93,10 @@ begin
             i_word => r_tx_word_buf,
             o_load => r_tx_load,
             -- clocked from master
-            i_sck => r_sck,
-            i_ws => r_ws,
+            i_sck => i_sck,
+            i_ws => i_ws,
             o_sd => o_sd
         );
-    
-    -- input 1 is master
-    r_sck <= i_sck1;
-    r_ws <= i_ws1;
-
-    -- send out master clock
-    o_sck <= r_sck;
-    o_ws <= r_ws;
 
     -- store latest word from input 1
     p_rx_1 : process (i_sck1) is
@@ -147,10 +135,10 @@ begin
         &
         std_logic_vector(resize(r_tx_right, 16));
 
-    -- sync tx word into master clock domain
-    p_tx : process (r_sck) is
+    -- sync tx word into tx clock domain
+    p_tx : process (i_sck) is
     begin
-        if rising_edge(r_sck) then
+        if rising_edge(i_sck) then
             if r_tx_load = '1' then
                 r_tx_word_buf <= r_tx_word;
             end if;
