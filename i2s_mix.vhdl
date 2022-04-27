@@ -61,6 +61,14 @@ architecture rtl of i2s_mix is
     signal r_tx_word_buf : std_logic_vector(31 downto 0);
     signal r_tx_load : std_logic;
 
+    -- mixer
+    signal r_rx_1_left : signed(16 downto 0);
+    signal r_rx_1_right : signed(16 downto 0);
+    signal r_rx_2_left : signed(16 downto 0);
+    signal r_rx_2_right : signed(16 downto 0);
+    signal r_tx_left : signed(16 downto 0);
+    signal r_tx_right : signed(16 downto 0);
+
 begin
 
     i2s_rx_1 : i2s_rx
@@ -122,10 +130,22 @@ begin
         end if;
     end process p_rx_2;
 
-    -- tx word is sum of latest inputs
-    r_tx_word <= std_logic_vector(
-        signed(r_rx_1_word_buf) + signed(r_rx_2_word_buf)
-    );
+
+    -- channel extraction
+    r_rx_1_left <= resize(signed(r_rx_1_word_buf(31 downto 16)), 17);
+    r_rx_1_right <= resize(signed(r_rx_1_word_buf(15 downto 0)), 17);
+    r_rx_2_left <= resize(signed(r_rx_2_word_buf(31 downto 16)), 17);
+    r_rx_2_right <= resize(signed(r_rx_2_word_buf(15 downto 0)), 17);
+
+    -- average
+    r_tx_left <= shift_right(r_rx_1_left + r_rx_2_left, 1);
+    r_tx_right <= shift_right(r_rx_1_right + r_rx_2_right, 1);
+
+    -- combine
+    r_tx_word <=
+        std_logic_vector(resize(r_tx_left, 16))
+        &
+        std_logic_vector(resize(r_tx_right, 16));
 
     -- sync tx word into master clock domain
     p_tx : process (r_sck) is
