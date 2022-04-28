@@ -125,7 +125,7 @@ begin
     -- synchronize buffers with tx clock
     p_tx_sync : process (i_sck) is
     begin
-        if rising_edge(i_sck) then
+        if falling_edge(i_sck) then
             r_rx_1_word_buf_tx <= r_rx_1_word_buf;
             r_rx_2_word_buf_tx <= r_rx_2_word_buf;
         end if;
