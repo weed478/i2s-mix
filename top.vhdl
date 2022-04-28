@@ -89,15 +89,15 @@ begin
             o_sd => r_sd
         );
 
-    o_sck <= r_sck when (i_src_en_0 or i_src_en_1) = '0' else
+    o_sck <= r_sck when i_src_en_0 = '0' and i_src_en_1 = '0' else
              i_sck0 when i_src_en_0 = '0' else
              i_sck1 when i_src_en_1 = '0' else
              '0';
-    o_ws <= r_ws when (i_src_en_0 or i_src_en_1) = '0' else
+    o_ws <= r_ws when i_src_en_0 = '0' and i_src_en_1 = '0' else
             i_ws0 when i_src_en_0 = '0' else
             i_ws1 when i_src_en_1 = '0' else
             '0';
-    o_sd <= r_sd when (i_src_en_0 or i_src_en_1) = '0' else
+    o_sd <= r_sd when i_src_en_0 = '0' and i_src_en_1 = '0' else
             i_sd0 when i_src_en_0 = '0' else
             i_sd1 when i_src_en_1 = '0' else
             '0';
