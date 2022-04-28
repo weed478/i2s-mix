@@ -18,15 +18,12 @@ entity top is
         o_ws : out std_logic;
         o_sd : out std_logic;
 
-        -- master clock select btns
-        i_master_sel_0 : in std_logic;
-        i_master_sel_1 : in std_logic;
+        -- master clock select
+        i_master_sel : in std_logic;
 
-        -- input select btns
-        i_src_sel_none : in std_logic;
-        i_src_sel_0 : in std_logic;
-        i_src_sel_1 : in std_logic;
-        i_src_sel_01 : in std_logic;
+        -- input enables
+        i_src_en_0 : in std_logic;
+        i_src_en_1 : in std_logic;
 
         -- status LEDs
         o_master_0 : out std_logic;
@@ -53,89 +50,56 @@ architecture rtl of top is
             o_sd : out std_logic
         );
     end component i2s_mix;
-    
-    -- current clock master (in0 or in1)
-    signal r_master : natural range 0 to 1 := 0;
 
-    -- input enables
-    signal r_src_en_0 : std_logic := '0';
-    signal r_src_en_1 : std_logic := '0';
-
-    -- master clock
+    -- tx pins
     signal r_sck : std_logic;
     signal r_ws : std_logic;
-
-    -- gated data signals
-    signal r_sd0 : std_logic;
-    signal r_sd1 : std_logic;
+    signal r_sd : std_logic;
 
 begin
 
     -- LEDs
-    o_master_0 <= '1' when r_master = 0 else '0';
-    o_master_1 <= '1' when r_master = 1 else '0';
-    o_src_0 <= r_src_en_0;
-    o_src_1 <= r_src_en_1;
-    
-    -- master clock select latches
-    p_master_sel : process (i_master_sel_0, i_master_sel_1) is
-    begin
-        if i_master_sel_0 = '0' then
-            r_master <= 0;
-        elsif i_master_sel_1 = '0' then
-            r_master <= 1;
-        end if;
-    end process p_master_sel;
+    o_master_0 <= not i_master_sel;
+    o_master_1 <= i_master_sel;
+    o_src_0 <= i_src_en_0;
+    o_src_1 <= i_src_en_1;
 
     -- connect master clock
-    with r_master select r_sck <=
-        i_sck0 when 0,
-        i_sck1 when 1;
-    with r_master select r_ws <=
-        i_ws0 when 0,
-        i_ws1 when 1;
-
-    -- output master clock
-    o_sck <= r_sck;
-    o_ws <= r_ws;
-
-    -- input enable latches
-    p_src_sel : process
-        (i_src_sel_none, i_src_sel_0, i_src_sel_1, i_src_sel_01)
-    is
-    begin
-        if i_src_sel_none = '0' then
-            r_src_en_0 <= '0';
-            r_src_en_1 <= '0';
-        elsif i_src_sel_0 = '0' then
-            r_src_en_0 <= '1';
-            r_src_en_1 <= '0';
-        elsif i_src_sel_1 = '0' then
-            r_src_en_0 <= '0';
-            r_src_en_1 <= '1';
-        elsif i_src_sel_01 = '0' then
-            r_src_en_0 <= '1';
-            r_src_en_1 <= '1';
-        end if;
-    end process p_src_sel;
-
-    -- gated data signals
-    r_sd0 <= i_sd0 and r_src_en_0;
-    r_sd1 <= i_sd1 and r_src_en_1;
+    with i_master_sel select
+        r_sck <= i_sck0 when '0',
+                 i_sck1 when '1',
+                 '0' when others;
+    with i_master_sel select
+        r_ws <= i_ws0 when '0',
+                i_ws1 when '1',
+                '0' when others;
 
     i2s_mix_1 : i2s_mix
         port map (
             i_sck1 => i_sck0,
             i_ws1 => i_ws0,
-            i_sd1 => r_sd0,
+            i_sd1 => i_sd0,
 
             i_sck2 => i_sck1,
             i_ws2 => i_ws1,
-            i_sd2 => r_sd1,
+            i_sd2 => i_sd1,
 
             i_sck => r_sck,
             i_ws => r_ws,
-            o_sd => o_sd
+            o_sd => r_sd
         );
+
+    o_sck <= r_sck when (i_src_en_0 and i_src_en_1) = '1' else
+             i_sck0 when i_src_en_0 = '1' else
+             i_sck1 when i_src_en_1 = '1' else
+             '0';
+    o_ws <= r_ws when (i_src_en_0 and i_src_en_1) = '1' else
+            i_ws0 when i_src_en_0 = '1' else
+            i_ws1 when i_src_en_1 = '1' else
+            '0';
+    o_ws <= r_sd when (i_src_en_0 and i_src_en_1) = '1' else
+            i_sd0 when i_src_en_0 = '1' else
+            i_sd1 when i_src_en_1 = '1' else
+            '0';
     
 end architecture rtl;
