@@ -105,7 +105,7 @@ begin
     -- store latest word from input 1
     p_rx_1 : process (i_sck1) is
     begin
-        if rising_edge(i_sck1) then
+        if falling_edge(i_sck1) then
             if r_rx_1_ready = '1' then
                 r_rx_1_word_buf <= r_rx_1_word;
             end if;
@@ -115,7 +115,7 @@ begin
     -- store latest word from input 2
     p_rx_2 : process (i_sck2) is
     begin
-        if rising_edge(i_sck2) then
+        if falling_edge(i_sck2) then
             if r_rx_2_ready = '1' then
                 r_rx_2_word_buf <= r_rx_2_word;
             end if;
