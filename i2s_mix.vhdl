@@ -126,8 +126,18 @@ begin
     p_tx_sync : process (i_sck) is
     begin
         if falling_edge(i_sck) then
-            r_rx_1_word_buf_tx <= r_rx_1_word_buf;
-            r_rx_2_word_buf_tx <= r_rx_2_word_buf;
+            -- do not read buffer near it's update moment
+            -- when ready = 0, we are at least
+            -- half a clock period away from
+            -- buffer update
+            if r_rx_1_ready = '0' then
+                r_rx_1_word_buf_tx <= r_rx_1_word_buf;
+            end if;
+            if r_rx_2_ready = '0' then
+                r_rx_2_word_buf_tx <= r_rx_2_word_buf;
+            end if;
+            -- signal will have half of sck clock period
+            -- to propagate through mixer
         end if;
     end process p_tx_sync;
 
