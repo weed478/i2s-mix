@@ -97,7 +97,7 @@ begin
             i_ws0 when i_src_en_0 = '1' else
             i_ws1 when i_src_en_1 = '1' else
             '0';
-    o_ws <= r_sd when (i_src_en_0 and i_src_en_1) = '1' else
+    o_sd <= r_sd when (i_src_en_0 and i_src_en_1) = '1' else
             i_sd0 when i_src_en_0 = '1' else
             i_sd1 when i_src_en_1 = '1' else
             '0';
