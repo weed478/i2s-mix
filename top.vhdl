@@ -59,19 +59,19 @@ architecture rtl of top is
 begin
 
     -- LEDs
-    o_master_0 <= not i_master_sel;
-    o_master_1 <= i_master_sel;
-    o_src_0 <= i_src_en_0;
-    o_src_1 <= i_src_en_1;
+    o_master_0 <= i_master_sel;
+    o_master_1 <= not i_master_sel;
+    o_src_0 <= not i_src_en_0;
+    o_src_1 <= not i_src_en_1;
 
     -- connect master clock
     with i_master_sel select
-        r_sck <= i_sck0 when '0',
-                 i_sck1 when '1',
+        r_sck <= i_sck0 when '1',
+                 i_sck1 when '0',
                  '0' when others;
     with i_master_sel select
-        r_ws <= i_ws0 when '0',
-                i_ws1 when '1',
+        r_ws <= i_ws0 when '1',
+                i_ws1 when '0',
                 '0' when others;
 
     i2s_mix_1 : i2s_mix
@@ -89,17 +89,17 @@ begin
             o_sd => r_sd
         );
 
-    o_sck <= r_sck when (i_src_en_0 and i_src_en_1) = '1' else
-             i_sck0 when i_src_en_0 = '1' else
-             i_sck1 when i_src_en_1 = '1' else
+    o_sck <= r_sck when (i_src_en_0 or i_src_en_1) = '0' else
+             i_sck0 when i_src_en_0 = '0' else
+             i_sck1 when i_src_en_1 = '0' else
              '0';
-    o_ws <= r_ws when (i_src_en_0 and i_src_en_1) = '1' else
-            i_ws0 when i_src_en_0 = '1' else
-            i_ws1 when i_src_en_1 = '1' else
+    o_ws <= r_ws when (i_src_en_0 or i_src_en_1) = '0' else
+            i_ws0 when i_src_en_0 = '0' else
+            i_ws1 when i_src_en_1 = '0' else
             '0';
-    o_sd <= r_sd when (i_src_en_0 and i_src_en_1) = '1' else
-            i_sd0 when i_src_en_0 = '1' else
-            i_sd1 when i_src_en_1 = '1' else
+    o_sd <= r_sd when (i_src_en_0 or i_src_en_1) = '0' else
+            i_sd0 when i_src_en_0 = '0' else
+            i_sd1 when i_src_en_1 = '0' else
             '0';
     
 end architecture rtl;
